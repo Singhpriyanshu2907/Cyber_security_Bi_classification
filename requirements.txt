@@ -6,5 +6,5 @@ scipy
 xgboost
 imblearn
 scikit-learn
-
+Flask
 -e .

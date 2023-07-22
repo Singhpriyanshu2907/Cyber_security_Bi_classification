@@ -1,0 +1,45 @@
+<html>
+<body>
+<form action="{{url_for('predict_datapoint')}}" method="POST">
+    <div class="form-group">
+        <label for="src_bytes">src_bytes:</label>
+        <input type="text" id="src_bytes" name="src_bytes" placeholder="Enter src_bytes value (float)">
+    </div>
+
+    <div class="form-group">
+        <label for="dst_host_serror_rate">dst_host_serror_rate:</label>
+        <input type="text" id="dst_host_serror_rate" name="dst_host_serror_rate" placeholder="Enter dst_host_serror_rate value (float)">
+    </div>
+
+    <div class="form-group">  
+        <label for="count">count:</label>
+        <input type="text" id="count" name="count" placeholder="Enter count value (float)">
+    </div>
+    
+    <div class="form-group">
+        <label for="dst_bytes">dst_bytes:</label>
+        <input type="text" id="dst_bytes" name="dst_bytes" placeholder="Enter dst_bytes value (float)">
+    </div>
+  
+    <div class="form-group">
+        <label for="same_srv_rate">same_srv_rate:</label>
+        <input type="text" id="same_srv_rate" name="same_srv_rate" placeholder="Enter same_srv_rate value (float)">
+    </div>
+  
+    <div class="form-group">
+        <label for="dst_host_same_srv_rate">dst_host_same_srv_rate:</label>
+        <input type="text" id="dst_host_same_srv_rate" name="dst_host_same_srv_rate" placeholder="Enter dst_host_same_srv_rate value (float)">
+    </div>  
+    
+    <div class="form-group">
+        <label for="logged_in">logged_in:</label>
+        <input type="text" id="logged_in" name="logged_in" placeholder="Enter logged_in value (float)">
+    </div>
+
+<div style="clear:both;"></div>
+  <input type="submit" value="Submit">
+</form>
+
+{{final_result}}
+</body>
+</html>

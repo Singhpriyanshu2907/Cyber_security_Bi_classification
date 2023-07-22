@@ -5,14 +5,21 @@ from src.exception import CustomException
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from dataclasses import dataclass
+from src.utils import get_cols_with_zero_std_dev,treat_outliers
+
+from src.components.data_transformation import DataTransformation
+from src.components.data_transformation import DataTransformationconfig
+
+from src.components.model_trainer import ModelTrainerConfig
+from src.components.model_trainer import ModelTrainer
 
 
 ## intialize the data ingestion configuration
 
 @dataclass
 class DataIngestionconfig:
-    train_data_path=os.path.join('artifacts','train.csv')
-    test_data_path=os.path.join('artifacts','test.csv')
+    train_set_path=os.path.join('artifacts','train_set.csv')
+    test_set_path=os.path.join('artifacts','test_set.csv')
     raw_data_path=os.path.join('artifacts','raw.csv')
 
 
@@ -38,18 +45,18 @@ class DataIngestion:
             Attack_Smurf = pd.read_csv('Data\Data_of_Attack_Back_Smurf.csv',index_col=None)
             logging.info('Dataset read as pandas Dataframe')
 
-            logging.info("Adding attact column in dataset")
-            No_Attack['Attack'] = 'No'
-            Attack_BufferOverflow['Attack'] = 'Yes'
-            Attack_FTPWrite['Attack'] = 'Yes'
-            Attack_GuessPassword['Attack'] = 'Yes'
-            Attack_Neptune['Attack'] = 'Yes'
-            Attack_NMap['Attack'] = 'Yes'
-            Attack_PortSweep['Attack'] = 'Yes'
-            Attack_RootKit['Attack'] = 'Yes'
-            Attack_Satan['Attack'] = 'Yes'
-            Attack_Smurf['Attack'] = 'Yes'
-            Attack_Normal['Attack'] = 'Yes'
+            logging.info("Adding Attack column in dataset where 0 represent no attack & 1 otherwise")
+            No_Attack['Attack'] = 0
+            Attack_BufferOverflow['Attack'] = 1
+            Attack_FTPWrite['Attack'] = 1
+            Attack_GuessPassword['Attack'] = 1
+            Attack_Neptune['Attack'] = 1
+            Attack_NMap['Attack'] = 1
+            Attack_PortSweep['Attack'] = 1
+            Attack_RootKit['Attack'] = 1
+            Attack_Satan['Attack'] = 1
+            Attack_Smurf['Attack'] = 1
+            Attack_Normal['Attack'] = 1
             logging.info("Column conatining target variable added")
 
             logging.info("Combining datasets into one dataset")
@@ -71,26 +78,61 @@ class DataIngestion:
 
             sample_data.to_csv(self.ingestion_config.raw_data_path,index=False)
 
-            logging.info("Train test split")
-            train_set,test_set=train_test_split(sample_data,test_size=0.30,random_state=42)
+            logging.info("Intializing Data Cleaning")
 
-            train_set.to_csv(self.ingestion_config.train_data_path,index=False,header=True)
-            test_set.to_csv(self.ingestion_config.test_data_path,index=False,header=True)
+            ## Replacing space from coulumn names
+            sample_data.rename(columns=lambda x: x.replace(' ', ''), inplace=True)
+
+            ##Dividing the data x variable & target variable
+            x = pd.DataFrame(sample_data.drop(columns='Attack'))
+            y = pd.DataFrame(sample_data['Attack'])
+
+            # Log the shape of X and Y before any data cleaning or manipulation
+            logging.info("Shape of X before data cleaning: {}".format(x.shape))
+            logging.info("Shape of Y before data cleaning: {}".format(y.shape))
+
+            ## Dropping the columns having 0 std
+            x = pd.DataFrame(get_cols_with_zero_std_dev(x))
+
+            ## ## Treating the outliers
+            x = pd.DataFrame(treat_outliers(x))
+
+            # Log the shape of X and Y before any data cleaning or manipulation
+            logging.info("Shape of X after data cleaning: {}".format(x.shape))
+            logging.info("Shape of Y after data cleaning: {}".format(y.shape))
+           
+            logging.info("Joining x & y back together")
+            sample_data1 = pd.concat([x,y],axis=1)
+            logging.info("Shape of sample_data after data cleaning: {}".format(sample_data1.shape))
+
+            logging.info("Data Cleaning completed")
+
+            logging.info("Train test split")
+            train_set,test_set=train_test_split(sample_data1,test_size=0.30,random_state=42)
+
+            train_set.to_csv(self.ingestion_config.train_set_path,index=False,header=True)
+            test_set.to_csv(self.ingestion_config.test_set_path,index=False,header=True)
 
             logging.info('Ingestion of data is completed')
 
             return(
-                self.ingestion_config.train_data_path,
-                self.ingestion_config.test_data_path
-
+                self.ingestion_config.train_set_path,
+                self.ingestion_config.test_set_path
             )
 
 
 
         except Exception as e:
-            logging.info('Error occured in Data Ingestion config')
+            raise CustomException(e,sys)
+            
 
 
 if __name__=="__main__":
     obj=DataIngestion()
-    obj.initiate_data_ingestion()
+    train_set,test_set=obj.initiate_data_ingestion()
+
+    data_transformation = DataTransformation()
+    train_arr,test_arr,_ = data_transformation.initiate_data_transformation(train_set,test_set)
+
+    modeltrainer = ModelTrainer()
+    print(modeltrainer.initate_model_training(train_arr,test_arr))
